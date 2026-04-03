@@ -1,0 +1,456 @@
+openapi: "3.0.3"
+info:
+  title: "Domain Authority & SEO Checker API"
+  version: "1.0.0"
+  description: |
+    Instant domain authority scores, backlink metrics, SEO health,
+    and spam analysis for agencies, SaaS platforms, and automated
+    SEO workflows. Sub-100ms response times via edge infrastructure.
+  contact:
+    name: "API Support"
+    email: "support@your-api.com"
+  license:
+    name: "Commercial"
+
+servers:
+  - url: "https://domain-seo-checker.p.rapidapi.com"
+    description: "RapidAPI Production"
+
+security:
+  - RapidAPIKey: []
+
+paths:
+  /domain/authority:
+    get:
+      summary: "Get Domain Authority Score"
+      operationId: "getDomainAuthority"
+      tags: ["Authority"]
+      parameters:
+        - name: domain
+          in: query
+          required: true
+          description: "Target domain (e.g. example.com)"
+          schema:
+            type: string
+            example: "example.com"
+        - name: include_history
+          in: query
+          required: false
+          description: "Include 12-month DA trend data"
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: "Authority data returned successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorityResponse'
+              example:
+                domain: "example.com"
+                authority_score: 74
+                grade: "B+"
+                percentile: 88.4
+                page_authority: 68
+                trust_flow: 52
+                citation_flow: 61
+                last_updated: "2026-03-29T12:00:00Z"
+        '400':
+          description: "Invalid domain format"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: "Rate limit exceeded"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /domain/backlinks:
+    get:
+      summary: "Get Backlink Profile"
+      operationId: "getDomainBacklinks"
+      tags: ["Backlinks"]
+      parameters:
+        - name: domain
+          in: query
+          required: true
+          description: "Target domain"
+          schema:
+            type: string
+            example: "example.com"
+        - name: limit
+          in: query
+          required: false
+          description: "Number of top anchors to return (1–50)"
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+        - name: filter
+          in: query
+          required: false
+          description: "Filter backlinks by follow type"
+          schema:
+            type: string
+            enum: [all, dofollow, nofollow]
+            default: all
+      responses:
+        '200':
+          description: "Backlink data returned successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BacklinkResponse'
+              example:
+                total_backlinks: 142830
+                referring_domains: 8421
+                dofollow: 79420
+                nofollow: 63410
+                top_anchors:
+                  - text: "click here"
+                    count: 4200
+                  - text: "example.com"
+                    count: 3100
+        '400':
+          description: "Invalid domain format"
+        '429':
+          description: "Rate limit exceeded"
+
+  /domain/spam-score:
+    get:
+      summary: "Get Spam Score"
+      operationId: "getSpamScore"
+      tags: ["Spam"]
+      parameters:
+        - name: domain
+          in: query
+          required: true
+          description: "Target domain"
+          schema:
+            type: string
+            example: "example.com"
+      responses:
+        '200':
+          description: "Spam analysis returned successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpamScoreResponse'
+              example:
+                spam_score: 12
+                risk_level: "low"
+                manual_action_risk: false
+                signals:
+                  - signal: "thin_content"
+                    triggered: false
+                  - signal: "exact_match_anchors"
+                    triggered: true
+                  - signal: "low_quality_links"
+                    triggered: false
+        '400':
+          description: "Invalid domain format"
+        '429':
+          description: "Rate limit exceeded"
+
+  /domain/seo-health:
+    get:
+      summary: "Get SEO Health Report"
+      operationId: "getSeoHealth"
+      tags: ["Health"]
+      parameters:
+        - name: domain
+          in: query
+          required: true
+          description: "Target domain"
+          schema:
+            type: string
+            example: "example.com"
+        - name: include_vitals
+          in: query
+          required: false
+          description: "Include Core Web Vitals assessment"
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: "SEO health report returned successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeoHealthResponse'
+              example:
+                https: true
+                mobile_friendly: true
+                load_time_ms: 1240
+                lcp: "good"
+                fid: "good"
+                cls: "needs_improvement"
+                meta_title: true
+                meta_description: true
+                structured_data: true
+        '400':
+          description: "Invalid domain format"
+        '429':
+          description: "Rate limit exceeded"
+
+  /domain/bulk:
+    post:
+      summary: "Bulk Domain Analysis"
+      operationId: "bulkDomainAnalysis"
+      tags: ["Bulk"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [domains]
+              properties:
+                domains:
+                  type: array
+                  description: "Array of domains to analyze (max 50)"
+                  items:
+                    type: string
+                  maxItems: 50
+                  example: ["competitor-a.com", "competitor-b.com"]
+                metrics:
+                  type: array
+                  description: "Which metrics to include"
+                  items:
+                    type: string
+                    enum: [authority, backlinks, spam, health]
+                  example: ["authority", "backlinks", "spam"]
+      responses:
+        '200':
+          description: "Bulk results returned successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        domain:
+                          type: string
+                        authority:
+                          $ref: '#/components/schemas/AuthorityResponse'
+                        backlinks:
+                          $ref: '#/components/schemas/BacklinkResponse'
+                        spam:
+                          $ref: '#/components/schemas/SpamScoreResponse'
+        '400':
+          description: "Invalid request body"
+        '429':
+          description: "Rate limit exceeded"
+
+  /domain/keywords:
+    get:
+      summary: "Get Top Organic Keywords"
+      operationId: "getDomainKeywords"
+      tags: ["Keywords"]
+      parameters:
+        - name: domain
+          in: query
+          required: true
+          description: "Target domain"
+          schema:
+            type: string
+            example: "example.com"
+        - name: limit
+          in: query
+          required: false
+          description: "Number of keywords to return (1–100)"
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: country
+          in: query
+          required: false
+          description: "ISO-3166 country code for localized results"
+          schema:
+            type: string
+            default: "us"
+            example: "us"
+      responses:
+        '200':
+          description: "Keyword data returned successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeywordsResponse'
+              example:
+                domain: "example.com"
+                country: "us"
+                total_keywords: 4820
+                keywords:
+                  - keyword: "example domain"
+                    position: 1
+                    search_volume: 12100
+                    traffic_estimate: 9200
+                    serp_features: ["featured_snippet"]
+                  - keyword: "what is example.com"
+                    position: 3
+                    search_volume: 880
+                    traffic_estimate: 440
+                    serp_features: []
+        '400':
+          description: "Invalid domain format"
+        '429':
+          description: "Rate limit exceeded"
+
+components:
+  securitySchemes:
+    RapidAPIKey:
+      type: apiKey
+      in: header
+      name: X-RapidAPI-Key
+      description: "Your RapidAPI subscription key"
+
+  schemas:
+    AuthorityResponse:
+      type: object
+      properties:
+        domain:
+          type: string
+          description: "The queried domain"
+        authority_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: "Domain authority score (0–100)"
+        grade:
+          type: string
+          enum: ["A+", "A", "A-", "B+", "B", "B-", "C", "D", "F"]
+          description: "Letter grade based on authority score"
+        percentile:
+          type: number
+          description: "Percentile rank vs. all indexed domains"
+        page_authority:
+          type: integer
+          description: "Page-level authority score (0–100)"
+        trust_flow:
+          type: integer
+          description: "Majestic Trust Flow (0–100)"
+        citation_flow:
+          type: integer
+          description: "Majestic Citation Flow (0–100)"
+        last_updated:
+          type: string
+          format: date-time
+          description: "Timestamp of last data refresh"
+
+    BacklinkResponse:
+      type: object
+      properties:
+        total_backlinks:
+          type: integer
+        referring_domains:
+          type: integer
+        dofollow:
+          type: integer
+        nofollow:
+          type: integer
+        top_anchors:
+          type: array
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+              count:
+                type: integer
+
+    SpamScoreResponse:
+      type: object
+      properties:
+        spam_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        risk_level:
+          type: string
+          enum: [low, medium, high]
+        manual_action_risk:
+          type: boolean
+        signals:
+          type: array
+          items:
+            type: object
+            properties:
+              signal:
+                type: string
+              triggered:
+                type: boolean
+
+    SeoHealthResponse:
+      type: object
+      properties:
+        https:
+          type: boolean
+        mobile_friendly:
+          type: boolean
+        load_time_ms:
+          type: integer
+        lcp:
+          type: string
+          enum: [good, needs_improvement, poor]
+        fid:
+          type: string
+          enum: [good, needs_improvement, poor]
+        cls:
+          type: string
+          enum: [good, needs_improvement, poor]
+        meta_title:
+          type: boolean
+        meta_description:
+          type: boolean
+        structured_data:
+          type: boolean
+
+    KeywordsResponse:
+      type: object
+      properties:
+        domain:
+          type: string
+        country:
+          type: string
+        total_keywords:
+          type: integer
+        keywords:
+          type: array
+          items:
+            type: object
+            properties:
+              keyword:
+                type: string
+              position:
+                type: integer
+              search_volume:
+                type: integer
+              traffic_estimate:
+                type: integer
+              serp_features:
+                type: array
+                items:
+                  type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        status_code:
+          type: integer

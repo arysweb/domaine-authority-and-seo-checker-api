@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEO Domain Checker — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0A0D14;
+    --bg2: #10141F;
+    --bg3: #161C2D;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #E8EBF4;
+    --muted: #7A849E;
+    --accent: #4F7FFF;
+    --accent2: #7B5FFF;
+    --green: #22C98E;
+    --amber: #F5A623;
+    --red: #FF5A5A;
+    --card-r: 12px;
+  }
+
+  body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── Nav ── */
+  nav {
+    display: flex; align-items: center; gap: 16px;
+    padding: 0 32px; height: 60px;
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 16px; height: 16px; fill: white; }
+  .logo-text { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -.3px; }
+  .logo-version { font-size: 10px; padding: 2px 7px; border-radius: 10px; background: rgba(79,127,255,.15); color: var(--accent); border: 1px solid rgba(79,127,255,.25); }
+  nav .spacer { flex: 1; }
+  .nav-link { font-size: 13px; color: var(--muted); text-decoration: none; padding: 6px 10px; border-radius: 6px; transition: all .15s; }
+  .nav-link:hover { color: var(--text); background: rgba(255,255,255,.05); }
+  .nav-btn { font-size: 13px; font-weight: 600; padding: 7px 16px; border-radius: 8px; background: var(--accent); color: white; border: none; cursor: pointer; transition: all .15s; font-family: 'Sora', sans-serif; }
+  .nav-btn:hover { background: #6B93FF; }
+
+  /* ── Main layout ── */
+  .main { display: flex; min-height: calc(100vh - 60px); }
+  .sidebar {
+    width: 220px; flex-shrink: 0;
+    background: var(--bg2); border-right: 1px solid var(--border);
+    padding: 20px 12px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .sidebar-label { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 12px 10px 6px; }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: 8px; cursor: pointer;
+    font-size: 13px; color: var(--muted); transition: all .15s; border: none; background: none; width: 100%; text-align: left; font-family: 'Sora', sans-serif;
+  }
+  .sidebar-item:hover { background: rgba(255,255,255,.04); color: var(--text); }
+  .sidebar-item.active { background: rgba(79,127,255,.12); color: var(--accent); }
+  .sidebar-item svg { width: 15px; height: 15px; opacity: .7; flex-shrink: 0; }
+  .sidebar-item.active svg { opacity: 1; }
+
+  .content { flex: 1; padding: 32px; overflow-y: auto; }
+
+  /* ── Search bar ── */
+  .search-section { margin-bottom: 32px; }
+  .search-title { font-size: 22px; font-weight: 700; letter-spacing: -.4px; margin-bottom: 6px; }
+  .search-sub { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+  .search-bar {
+    display: flex; gap: 10px; align-items: center;
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 12px; padding: 6px 6px 6px 16px;
+    max-width: 680px; transition: border-color .2s;
+  }
+  .search-bar:focus-within { border-color: var(--accent); }
+  .search-bar input {
+    flex: 1; background: none; border: none; outline: none;
+    font-size: 15px; font-family: 'Sora', sans-serif; color: var(--text);
+  }
+  .search-bar input::placeholder { color: var(--muted); }
+  .search-btn {
+    background: var(--accent); color: white; border: none; border-radius: 8px;
+    padding: 9px 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: 'Sora', sans-serif; transition: all .15s; white-space: nowrap;
+  }
+  .search-btn:hover { background: #6B93FF; }
+  .search-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+  .tab {
+    padding: 10px 18px; font-size: 13px; font-weight: 500; cursor: pointer;
+    color: var(--muted); border-bottom: 2px solid transparent; transition: all .15s;
+    background: none; border-top: none; border-left: none; border-right: none;
+    font-family: 'Sora', sans-serif; margin-bottom: -1px;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── Cards ── */
+  .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .metric-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--card-r); padding: 20px;
+    transition: border-color .2s;
+  }
+  .metric-card:hover { border-color: var(--border2); }
+  .metric-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 8px; }
+  .metric-value { font-size: 32px; font-weight: 700; letter-spacing: -1px; line-height: 1; margin-bottom: 4px; }
+  .metric-sub { font-size: 12px; color: var(--muted); }
+  .metric-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; margin-top: 6px; }
+  .badge-green { background: rgba(34,201,142,.15); color: var(--green); border: 1px solid rgba(34,201,142,.25); }
+  .badge-amber { background: rgba(245,166,35,.15); color: var(--amber); border: 1px solid rgba(245,166,35,.25); }
+  .badge-red { background: rgba(255,90,90,.15); color: var(--red); border: 1px solid rgba(255,90,90,.25); }
+  .badge-blue { background: rgba(79,127,255,.15); color: var(--accent); border: 1px solid rgba(79,127,255,.25); }
+
+  .card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--card-r); padding: 20px; margin-bottom: 16px; }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+  /* ── DA Gauge ── */
+  .gauge-wrap { display: flex; align-items: center; gap: 32px; }
+  .gauge { position: relative; width: 120px; height: 120px; }
+  .gauge svg { transform: rotate(-90deg); }
+  .gauge-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .gauge-num { font-size: 28px; font-weight: 700; line-height: 1; }
+  .gauge-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .gauge-details { display: flex; flex-direction: column; gap: 10px; }
+  .gauge-row { display: flex; align-items: center; justify-content: space-between; gap: 40px; }
+  .gauge-row-label { font-size: 12px; color: var(--muted); }
+  .gauge-row-val { font-size: 13px; font-weight: 600; }
+
+  /* ── Progress bars ── */
+  .prog-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .prog-label { font-size: 12px; color: var(--muted); width: 120px; flex-shrink: 0; }
+  .prog-bar { flex: 1; height: 6px; background: rgba(255,255,255,.06); border-radius: 3px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+  .prog-val { font-size: 12px; font-weight: 600; width: 36px; text-align: right; }
+
+  /* ── Table ── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(255,255,255,.02); }
+
+  /* ── CWV ── */
+  .cwv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .cwv-card { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: center; }
+  .cwv-val { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .cwv-name { font-size: 11px; color: var(--muted); }
+
+  /* ── Spam signals ── */
+  .signal-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .signal-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: rgba(255,255,255,.02); border-radius: 6px; border: 1px solid var(--border); font-size: 12px; }
+  .signal-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .signal-ok .signal-dot { background: var(--green); }
+  .signal-bad .signal-dot { background: var(--red); }
+
+  /* ── History chart ── */
+  .sparkline { display: flex; align-items: flex-end; gap: 3px; height: 60px; }
+  .spark-bar { flex: 1; border-radius: 3px 3px 0 0; min-width: 8px; transition: opacity .2s; }
+  .spark-bar:hover { opacity: .7; }
+
+  /* ── Empty state ── */
+  .empty-state { text-align: center; padding: 80px 40px; color: var(--muted); }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: .4; }
+  .empty-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .empty-sub { font-size: 14px; }
+
+  /* ── Loading ── */
+  .loading { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 60px; color: var(--muted); font-size: 14px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 20px; height: 20px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+
+  /* ── Health checks ── */
+  .health-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .health-item { display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+  .health-ok { color: var(--green); font-size: 16px; }
+  .health-fail { color: var(--red); font-size: 16px; }
+
+  /* ── Keywords table ── */
+  .kw-pos { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+  .pos-1 { background: rgba(245,166,35,.2); color: var(--amber); }
+  .pos-top3 { background: rgba(79,127,255,.15); color: var(--accent); }
+  .pos-top10 { background: rgba(34,201,142,.12); color: var(--green); }
+  .pos-rest { background: rgba(255,255,255,.06); color: var(--muted); }
+
+  /* ── API key input ── */
+  .api-key-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; padding: 12px 16px; background: rgba(79,127,255,.07); border: 1px solid rgba(79,127,255,.2); border-radius: 10px; }
+  .api-key-bar label { font-size: 12px; color: var(--accent); font-weight: 600; white-space: nowrap; }
+  .api-key-bar input { flex: 1; background: rgba(255,255,255,.05); border: 1px solid var(--border2); border-radius: 6px; padding: 6px 10px; font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--text); outline: none; }
+  .api-key-bar input:focus { border-color: var(--accent); }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn .3s ease; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-icon"><svg viewBox="0 0 16 16"><path d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z"/></svg></div>
+    <span class="logo-text">SEO Checker</span>
+    <span class="logo-version">API v1.0</span>
+  </a>
+  <div class="spacer"></div>
+  <a href="#" class="nav-link">Docs</a>
+  <a href="#" class="nav-link">Pricing</a>
+  <button class="nav-btn">Get API Key</button>
+</nav>
+
+<div class="main">
+  <aside class="sidebar">
+    <div class="sidebar-label">Analysis</div>
+    <button class="sidebar-item active" onclick="showPage('dashboard')">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2zm7 0h5v5H9zM2 9h5v5H2zm7 0h5v5H9z"/></svg>
+      Dashboard
+    </button>
+    <button class="sidebar-item" onclick="showPage('authority')">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2 5h5l-4 3 1.5 5L8 11l-4.5 3L5 9 1 6h5z"/></svg>
+      Authority
+    </button>
+    <button class="sidebar-item" onclick="showPage('backlinks')">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M6 2a4 4 0 000 8h1V8H6a2 2 0 110-4h1V2H6zm4 0v2h1a2 2 0 110 4h-1v2h1a4 4 0 000-8h-1zM7 5v6h2V5H7z"/></svg>
+      Backlinks
+    </button>
+    <button class="sidebar-item" onclick="showPage('spam')">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zM7 4h2v5H7V4zm0 6h2v2H7v-2z"/></svg>
+      Spam Score
+    </button>
+    <button class="sidebar-item" onclick="showPage('health')">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1C4.14 1 1 4.14 1 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 10.5l-4-4 1.4-1.4L9 8.7l3.6-3.6L14 6.5l-5 5z"/></svg>
+      SEO Health
+    </button>
+    <button class="sidebar-item" onclick="showPage('keywords')">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M6.5 1a5.5 5.5 0 014.38 8.82l3.65 3.65-1.06 1.06-3.65-3.65A5.5 5.5 0 116.5 1zm0 2a3.5 3.5 0 100 7 3.5 3.5 0 000-7z"/></svg>
+      Keywords
+    </button>
+    <button class="sidebar-item" onclick="showPage('bulk')">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h4v4H2zm5 0h4v4H7zm5 0h2v4h-2zM2 7h4v4H2zm5 0h4v4H7zm5 0h2v4h-2zM2 12h4v2H2zm5 0h4v2H7zm5 0h2v2h-2z"/></svg>
+      Bulk Analysis
+    </button>
+  </aside>
+
+  <div class="content">
+
+    <!-- API Key Bar -->
+    <div class="api-key-bar">
+      <label>🔑 API BASE URL</label>
+      <input type="text" id="apiBase" value="http://localhost:3000" placeholder="http://localhost:3000">
+      <label style="margin-left:12px">KEY</label>
+      <input type="text" id="apiKey" value="demo-key" placeholder="Your RapidAPI Key">
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="search-section">
+        <div class="search-title">Domain Intelligence</div>
+        <div class="search-sub">Analyze any domain for authority, backlinks, spam score, and SEO health</div>
+        <div class="search-bar">
+          <input type="text" id="domain-input" placeholder="Enter domain e.g. github.com" value="">
+          <button class="search-btn" onclick="analyzeAll()">Analyze Domain</button>
+        </div>
+      </div>
+      <div id="dashboard-content">
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <div class="empty-title">Enter a domain to get started</div>
+          <div class="empty-sub">Get a full SEO profile in seconds</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AUTHORITY PAGE -->
+    <div class="page" id="page-authority">
+      <div class="search-section">
+        <div class="search-title">Domain Authority</div>
+        <div class="search-sub">DA score, grade, trust flow, and citation flow</div>
+        <div class="search-bar">
+          <input type="text" id="auth-input" placeholder="e.g. mozilla.org">
+          <button class="search-btn" onclick="fetchAuthority()">Check Authority</button>
+        </div>
+      </div>
+      <div id="authority-content">
+        <div class="empty-state"><div class="empty-icon">⭐</div><div class="empty-title">Enter a domain above</div></div>
+      </div>
+    </div>
+
+    <!-- BACKLINKS PAGE -->
+    <div class="page" id="page-backlinks">
+      <div class="search-section">
+        <div class="search-title">Backlink Profile</div>
+        <div class="search-sub">Total backlinks, referring domains, and top anchor texts</div>
+        <div class="search-bar">
+          <input type="text" id="bl-input" placeholder="e.g. vercel.com">
+          <select id="bl-filter" style="background:rgba(255,255,255,.05);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-family:Sora,sans-serif;font-size:13px;outline:none">
+            <option value="all">All links</option>
+            <option value="dofollow">Dofollow only</option>
+            <option value="nofollow">Nofollow only</option>
+          </select>
+          <button class="search-btn" onclick="fetchBacklinks()">Get Backlinks</button>
+        </div>
+      </div>
+      <div id="backlinks-content">
+        <div class="empty-state"><div class="empty-icon">🔗</div><div class="empty-title">Enter a domain above</div></div>
+      </div>
+    </div>
+
+    <!-- SPAM PAGE -->
+    <div class="page" id="page-spam">
+      <div class="search-section">
+        <div class="search-title">Spam Score Analysis</div>
+        <div class="search-sub">14-point toxicity check with manual action risk indicator</div>
+        <div class="search-bar">
+          <input type="text" id="spam-input" placeholder="e.g. example.com">
+          <button class="search-btn" onclick="fetchSpam()">Check Spam</button>
+        </div>
+      </div>
+      <div id="spam-content">
+        <div class="empty-state"><div class="empty-icon">🛡️</div><div class="empty-title">Enter a domain above</div></div>
+      </div>
+    </div>
+
+    <!-- HEALTH PAGE -->
+    <div class="page" id="page-health">
+      <div class="search-section">
+        <div class="search-title">SEO Health Report</div>
+        <div class="search-sub">HTTPS, mobile, Core Web Vitals, meta tags, and more</div>
+        <div class="search-bar">
+          <input type="text" id="health-input" placeholder="e.g. stripe.com">
+          <button class="search-btn" onclick="fetchHealth()">Audit Site</button>
+        </div>
+      </div>
+      <div id="health-content">
+        <div class="empty-state"><div class="empty-icon">🏥</div><div class="empty-title">Enter a domain above</div></div>
+      </div>
+    </div>
+
+    <!-- KEYWORDS PAGE -->
+    <div class="page" id="page-keywords">
+      <div class="search-section">
+        <div class="search-title">Organic Keywords</div>
+        <div class="search-sub">Top ranking keywords, traffic estimates, and SERP features</div>
+        <div class="search-bar">
+          <input type="text" id="kw-input" placeholder="e.g. tailwindcss.com">
+          <select id="kw-country" style="background:rgba(255,255,255,.05);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-family:Sora,sans-serif;font-size:13px;outline:none">
+            <option value="us">🇺🇸 US</option>
+            <option value="gb">🇬🇧 UK</option>
+            <option value="de">🇩🇪 DE</option>
+            <option value="es">🇪🇸 ES</option>
+            <option value="fr">🇫🇷 FR</option>
+          </select>
+          <button class="search-btn" onclick="fetchKeywords()">Get Keywords</button>
+        </div>
+      </div>
+      <div id="keywords-content">
+        <div class="empty-state"><div class="empty-icon">🔑</div><div class="empty-title">Enter a domain above</div></div>
+      </div>
+    </div>
+
+    <!-- BULK PAGE -->
+    <div class="page" id="page-bulk">
+      <div class="search-section">
+        <div class="search-title">Bulk Domain Analysis</div>
+        <div class="search-sub">Analyze up to 50 domains at once (Pro/Enterprise plan)</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Domains (one per line, max 50)</div>
+        <textarea id="bulk-domains" rows="8" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:8px;padding:12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;resize:vertical;outline:none;line-height:1.7" placeholder="github.com&#10;vercel.com&#10;netlify.com&#10;cloudflare.com"></textarea>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
+          <span style="font-size:13px;color:var(--muted)">Metrics:</span>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="m-auth" checked> Authority</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="m-bl"> Backlinks</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="m-spam"> Spam</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="m-health"> Health</label>
+          <div style="flex:1"></div>
+          <button class="search-btn" onclick="fetchBulk()">Run Bulk Analysis</button>
+        </div>
+      </div>
+      <div id="bulk-content"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API = () => document.getElementById('apiBase').value.replace(/\/$/, '');
+const KEY = () => document.getElementById('apiKey').value;
+
+function headers() {
+  return { 'X-RapidAPI-Key': KEY(), 'X-RapidAPI-Host': 'domain-seo-checker.p.rapidapi.com', 'Content-Type': 'application/json' };
+}
+
+async function apiFetch(path) {
+  const r = await fetch(API() + path, { headers: headers() });
+  if (!r.ok) { const e = await r.json(); throw new Error(e.message || 'API error'); }
+  return r.json();
+}
+
+async function apiPost(path, body) {
+  const r = await fetch(API() + path, { method: 'POST', headers: headers(), body: JSON.stringify(body) });
+  if (!r.ok) { const e = await r.json(); throw new Error(e.message || 'API error'); }
+  return r.json();
+}
+
+function loading(el) { el.innerHTML = '<div class="loading"><div class="spinner"></div>Fetching data...</div>'; }
+function error(el, msg) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Error</div><div class="empty-sub">${msg}</div></div>`; }
+
+function gradeColor(grade) {
+  if (grade?.startsWith('A')) return 'var(--green)';
+  if (grade?.startsWith('B')) return 'var(--accent)';
+  if (grade?.startsWith('C')) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+function riskBadge(level) {
+  if (level === 'low') return '<span class="metric-badge badge-green">LOW RISK</span>';
+  if (level === 'medium') return '<span class="metric-badge badge-amber">MEDIUM RISK</span>';
+  return '<span class="metric-badge badge-red">HIGH RISK</span>';
+}
+
+function cwvColor(rating) {
+  if (rating === 'good') return 'var(--green)';
+  if (rating === 'needs_improvement') return 'var(--amber)';
+  return 'var(--red)';
+}
+
+function num(n) { return Number(n).toLocaleString(); }
+
+// ── Gauge SVG ─────────────────────────────────────────────────────────────────
+function gauge(score) {
+  const r = 46, cx = 60, cy = 60;
+  const circ = 2 * Math.PI * r;
+  const fill = (score / 100) * circ;
+  const color = score >= 70 ? '#22C98E' : score >= 50 ? '#4F7FFF' : score >= 30 ? '#F5A623' : '#FF5A5A';
+  return `
+    <div class="gauge">
+      <svg width="120" height="120" viewBox="0 0 120 120">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="10"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="10"
+          stroke-dasharray="${fill} ${circ}" stroke-linecap="round"/>
+      </svg>
+      <div class="gauge-center">
+        <div class="gauge-num" style="color:${color}">${score}</div>
+        <div class="gauge-lbl">/ 100</div>
+      </div>
+    </div>`;
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+async function analyzeAll() {
+  const domain = document.getElementById('domain-input').value.trim();
+  if (!domain) return;
+  const el = document.getElementById('dashboard-content');
+  loading(el);
+  try {
+    const [auth, bl, spam, health] = await Promise.all([
+      apiFetch(`/domain/authority?domain=${domain}`),
+      apiFetch(`/domain/backlinks?domain=${domain}`),
+      apiFetch(`/domain/spam-score?domain=${domain}`),
+      apiFetch(`/domain/seo-health?domain=${domain}&include_vitals=true`),
+    ]);
+    renderDashboard(el, auth, bl, spam, health);
+  } catch (e) { error(el, e.message); }
+}
+
+function renderDashboard(el, auth, bl, spam, health) {
+  const cvw = health.core_web_vitals || {};
+  el.innerHTML = `
+  <div class="fade-in">
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Domain Authority</div>
+        <div class="metric-value" style="color:${gradeColor(auth.grade)}">${auth.authority_score}</div>
+        <div class="metric-sub">Grade: <strong>${auth.grade}</strong> · ${auth.percentile}th pct</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Total Backlinks</div>
+        <div class="metric-value" style="color:var(--accent)">${num(bl.total_backlinks)}</div>
+        <div class="metric-sub">${num(bl.referring_domains)} referring domains</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Spam Score</div>
+        <div class="metric-value" style="color:${spam.risk_level==='low'?'var(--green)':spam.risk_level==='medium'?'var(--amber)':'var(--red)'}">${spam.spam_score}</div>
+        <div class="metric-sub">${riskBadge(spam.risk_level)}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Page Load</div>
+        <div class="metric-value" style="color:${health.load_time_ms<2000?'var(--green)':health.load_time_ms<4000?'var(--amber)':'var(--red)'}">${health.load_time_ms}</div>
+        <div class="metric-sub">milliseconds</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card">
+        <div class="card-title">Authority Profile</div>
+        <div class="gauge-wrap">
+          ${gauge(auth.authority_score)}
+          <div class="gauge-details">
+            <div class="gauge-row"><span class="gauge-row-label">Page Authority</span><span class="gauge-row-val">${auth.page_authority}</span></div>
+            <div class="gauge-row"><span class="gauge-row-label">Trust Flow</span><span class="gauge-row-val">${auth.trust_flow}</span></div>
+            <div class="gauge-row"><span class="gauge-row-label">Citation Flow</span><span class="gauge-row-val">${auth.citation_flow}</span></div>
+            <div class="gauge-row"><span class="gauge-row-label">Percentile</span><span class="gauge-row-val">${auth.percentile}%</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Core Web Vitals</div>
+        <div class="cwv-grid">
+          <div class="cwv-card">
+            <div class="cwv-val" style="color:${cwvColor(cvw.lcp_rating)}">${cvw.lcp_ms || '—'}ms</div>
+            <div class="cwv-name">LCP</div>
+            <div style="font-size:10px;margin-top:4px;color:${cwvColor(cvw.lcp_rating)}">${cvw.lcp_rating || ''}</div>
+          </div>
+          <div class="cwv-card">
+            <div class="cwv-val" style="color:${cwvColor(cvw.fid_rating)}">${cvw.fid_ms || '—'}ms</div>
+            <div class="cwv-name">FID</div>
+            <div style="font-size:10px;margin-top:4px;color:${cwvColor(cvw.fid_rating)}">${cvw.fid_rating || ''}</div>
+          </div>
+          <div class="cwv-card">
+            <div class="cwv-val" style="color:${cwvColor(cvw.cls_rating)}">${cvw.cls_score || '—'}</div>
+            <div class="cwv-name">CLS</div>
+            <div style="font-size:10px;margin-top:4px;color:${cwvColor(cvw.cls_rating)}">${cvw.cls_rating || ''}</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">
+          ${[['HTTPS', health.https],['Mobile', health.mobile_friendly],['Meta Title', health.meta_title],['Meta Desc', health.meta_description],['Structured Data', health.structured_data]].map(([k,v]) => `<span style="font-size:12px;display:flex;align-items:center;gap:5px"><span style="color:${v?'var(--green)':'var(--red)'}">${v?'✓':'✗'}</span>${k}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+      <div class="card">
+        <div class="card-title">Backlink Distribution</div>
+        <div class="prog-row"><span class="prog-label">Dofollow</span><div class="prog-bar"><div class="prog-fill" style="width:${Math.round(bl.dofollow/bl.total_backlinks*100)}%;background:var(--green)"></div></div><span class="prog-val">${Math.round(bl.dofollow/bl.total_backlinks*100)}%</span></div>
+        <div class="prog-row"><span class="prog-label">Nofollow</span><div class="prog-bar"><div class="prog-fill" style="width:${Math.round(bl.nofollow/bl.total_backlinks*100)}%;background:var(--accent)"></div></div><span class="prog-val">${Math.round(bl.nofollow/bl.total_backlinks*100)}%</span></div>
+        <div style="margin-top:16px">
+          <div class="card-title" style="font-size:12px;margin-bottom:10px">Top Anchor Texts</div>
+          ${(bl.top_anchors||[]).slice(0,5).map(a => `<div class="prog-row"><span class="prog-label" style="width:130px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${a.text}</span><div class="prog-bar"><div class="prog-fill" style="width:${Math.min(100,Math.round(a.count/(bl.top_anchors[0].count)*100))}%;background:var(--accent2)"></div></div><span class="prog-val">${num(a.count)}</span></div>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Spam Analysis</div>
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+          ${gauge(spam.spam_score)}
+          <div>
+            <div style="font-size:13px;margin-bottom:6px">Risk Level: ${riskBadge(spam.risk_level)}</div>
+            <div style="font-size:12px;color:var(--muted)">Manual action risk: <span style="color:${spam.manual_action_risk?'var(--red)':'var(--green)'}">${spam.manual_action_risk?'Yes':'No'}</span></div>
+          </div>
+        </div>
+        <div class="signal-grid">
+          ${(spam.signals||[]).slice(0,6).map(s => `<div class="signal-item ${s.triggered?'signal-bad':'signal-ok'}"><div class="signal-dot"></div>${s.signal.replace(/_/g,' ')}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Authority ─────────────────────────────────────────────────────────────────
+async function fetchAuthority() {
+  const domain = document.getElementById('auth-input').value.trim();
+  if (!domain) return;
+  const el = document.getElementById('authority-content');
+  loading(el);
+  try {
+    const d = await apiFetch(`/domain/authority?domain=${domain}&include_history=true`);
+    const maxH = Math.max(...(d.history||[]).map(h => h.score));
+    el.innerHTML = `<div class="fade-in">
+      <div class="metrics-grid">
+        <div class="metric-card"><div class="metric-label">Authority Score</div><div class="metric-value" style="color:${gradeColor(d.grade)}">${d.authority_score}</div><div class="metric-sub">Grade: ${d.grade}</div></div>
+        <div class="metric-card"><div class="metric-label">Page Authority</div><div class="metric-value">${d.page_authority}</div></div>
+        <div class="metric-card"><div class="metric-label">Trust Flow</div><div class="metric-value">${d.trust_flow}</div></div>
+        <div class="metric-card"><div class="metric-label">Citation Flow</div><div class="metric-value">${d.citation_flow}</div></div>
+      </div>
+      <div class="card"><div class="card-title">12-Month DA History</div>
+        <div style="display:flex;align-items:flex-end;gap:4px;height:80px;margin-bottom:8px">
+          ${(d.history||[]).map(h => `<div title="${h.month}: ${h.score}" style="flex:1;height:${Math.round(h.score/maxH*80)}px;background:var(--accent);border-radius:3px 3px 0 0;opacity:.8;min-width:8px"></div>`).join('')}
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted)">
+          ${(d.history||[]).map(h => `<span>${h.month.slice(5)}</span>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  } catch (e) { error(el, e.message); }
+}
+
+// ── Backlinks ─────────────────────────────────────────────────────────────────
+async function fetchBacklinks() {
+  const domain = document.getElementById('bl-input').value.trim();
+  const filter = document.getElementById('bl-filter').value;
+  if (!domain) return;
+  const el = document.getElementById('backlinks-content');
+  loading(el);
+  try {
+    const d = await apiFetch(`/domain/backlinks?domain=${domain}&limit=15&filter=${filter}`);
+    el.innerHTML = `<div class="fade-in">
+      <div class="metrics-grid">
+        <div class="metric-card"><div class="metric-label">Total Backlinks</div><div class="metric-value" style="color:var(--accent)">${num(d.total_backlinks)}</div></div>
+        <div class="metric-card"><div class="metric-label">Referring Domains</div><div class="metric-value">${num(d.referring_domains)}</div></div>
+        ${d.dofollow!==undefined?`<div class="metric-card"><div class="metric-label">Dofollow</div><div class="metric-value" style="color:var(--green)">${num(d.dofollow)}</div></div>`:''}
+        ${d.nofollow!==undefined?`<div class="metric-card"><div class="metric-label">Nofollow</div><div class="metric-value" style="color:var(--amber)">${num(d.nofollow)}</div></div>`:''}
+      </div>
+      <div class="card"><div class="card-title">Top Anchor Texts</div>
+        <table class="data-table"><thead><tr><th>#</th><th>Anchor Text</th><th>Count</th><th>Share</th></tr></thead><tbody>
+          ${(d.top_anchors||[]).map((a,i) => `<tr><td style="color:var(--muted)">${i+1}</td><td>${a.text}</td><td>${num(a.count)}</td><td><div style="display:flex;align-items:center;gap:8px"><div style="width:80px;height:4px;background:rgba(255,255,255,.06);border-radius:2px"><div style="width:${Math.min(100,Math.round(a.count/d.top_anchors[0].count*100))}%;height:100%;background:var(--accent2);border-radius:2px"></div></div>${Math.round(a.count/d.top_anchors[0].count*100)}%</div></td></tr>`).join('')}
+        </tbody></table>
+      </div>
+    </div>`;
+  } catch (e) { error(el, e.message); }
+}
+
+// ── Spam ──────────────────────────────────────────────────────────────────────
+async function fetchSpam() {
+  const domain = document.getElementById('spam-input').value.trim();
+  if (!domain) return;
+  const el = document.getElementById('spam-content');
+  loading(el);
+  try {
+    const d = await apiFetch(`/domain/spam-score?domain=${domain}`);
+    el.innerHTML = `<div class="fade-in">
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:24px;margin-bottom:24px">
+        <div class="card" style="text-align:center;padding:32px 40px">
+          ${gauge(d.spam_score)}
+          <div style="margin-top:12px">${riskBadge(d.risk_level)}</div>
+          <div style="margin-top:8px;font-size:12px;color:var(--muted)">Manual action risk:<br><strong style="color:${d.manual_action_risk?'var(--red)':'var(--green)'}">${d.manual_action_risk?'⚠ Yes':'✓ No'}</strong></div>
+        </div>
+        <div class="card"><div class="card-title">Spam Signals (14-point check)</div>
+          <div class="signal-grid">
+            ${(d.signals||[]).map(s => `<div class="signal-item ${s.triggered?'signal-bad':'signal-ok'}"><div class="signal-dot"></div><span>${s.signal.replace(/_/g,' ')}</span></div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  } catch (e) { error(el, e.message); }
+}
+
+// ── Health ────────────────────────────────────────────────────────────────────
+async function fetchHealth() {
+  const domain = document.getElementById('health-input').value.trim();
+  if (!domain) return;
+  const el = document.getElementById('health-content');
+  loading(el);
+  try {
+    const d = await apiFetch(`/domain/seo-health?domain=${domain}&include_vitals=true`);
+    const cvw = d.core_web_vitals || {};
+    const checks = [
+      ['HTTPS Enabled', d.https], ['Mobile Friendly', d.mobile_friendly],
+      ['Meta Title', d.meta_title], ['Meta Description', d.meta_description],
+      ['Structured Data', d.structured_data], ['Robots.txt', d.robots_txt],
+      ['XML Sitemap', d.sitemap]
+    ];
+    el.innerHTML = `<div class="fade-in">
+      <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="cwv-card card"><div class="cwv-val" style="color:${cwvColor(cvw.lcp_rating)}">${cvw.lcp_ms}ms</div><div class="cwv-name">LCP — Largest Contentful Paint</div><div style="color:${cwvColor(cvw.lcp_rating)};font-size:12px;margin-top:4px">${cvw.lcp_rating}</div></div>
+        <div class="cwv-card card"><div class="cwv-val" style="color:${cwvColor(cvw.fid_rating)}">${cvw.fid_ms}ms</div><div class="cwv-name">FID — First Input Delay</div><div style="color:${cwvColor(cvw.fid_rating)};font-size:12px;margin-top:4px">${cvw.fid_rating}</div></div>
+        <div class="cwv-card card"><div class="cwv-val" style="color:${cwvColor(cvw.cls_rating)}">${cvw.cls_score}</div><div class="cwv-name">CLS — Cumulative Layout Shift</div><div style="color:${cwvColor(cvw.cls_rating)};font-size:12px;margin-top:4px">${cvw.cls_rating}</div></div>
+      </div>
+      <div class="card" style="margin-top:16px"><div class="card-title">Technical SEO Checks</div>
+        <div class="health-grid">
+          ${checks.map(([label, ok]) => `<div class="health-item"><span class="${ok?'health-ok':'health-fail'}">${ok?'✓':'✗'}</span><span>${label}</span></div>`).join('')}
+        </div>
+      </div>
+      <div class="metric-card" style="margin-top:16px"><div class="metric-label">Page Load Time</div><div class="metric-value" style="color:${d.load_time_ms<2000?'var(--green)':d.load_time_ms<4000?'var(--amber)':'var(--red)'}">${num(d.load_time_ms)}<span style="font-size:16px;font-weight:400"> ms</span></div></div>
+    </div>`;
+  } catch (e) { error(el, e.message); }
+}
+
+// ── Keywords ──────────────────────────────────────────────────────────────────
+async function fetchKeywords() {
+  const domain = document.getElementById('kw-input').value.trim();
+  const country = document.getElementById('kw-country').value;
+  if (!domain) return;
+  const el = document.getElementById('keywords-content');
+  loading(el);
+  try {
+    const d = await apiFetch(`/domain/keywords?domain=${domain}&limit=20&country=${country}`);
+    el.innerHTML = `<div class="fade-in">
+      <div style="display:flex;gap:16px;margin-bottom:24px">
+        <div class="metric-card"><div class="metric-label">Total Keywords</div><div class="metric-value" style="color:var(--accent)">${num(d.total_keywords)}</div></div>
+        <div class="metric-card"><div class="metric-label">Showing</div><div class="metric-value">${d.keywords.length}</div><div class="metric-sub">top keywords</div></div>
+        <div class="metric-card"><div class="metric-label">Country</div><div class="metric-value" style="font-size:18px">${country.toUpperCase()}</div></div>
+      </div>
+      <div class="card"><div class="card-title">Organic Keywords</div>
+        <table class="data-table"><thead><tr><th>Pos</th><th>Keyword</th><th>Volume</th><th>Traffic Est.</th><th>CPC</th><th>SERP Features</th></tr></thead><tbody>
+          ${d.keywords.map(k => {
+            const pc = k.position===1?'pos-1':k.position<=3?'pos-top3':k.position<=10?'pos-top10':'pos-rest';
+            return `<tr><td><span class="kw-pos ${pc}">${k.position}</span></td><td>${k.keyword}</td><td>${num(k.search_volume)}</td><td>${num(k.traffic_estimate)}</td><td>$${k.cpc_usd}</td><td>${k.serp_features.length?`<span class="metric-badge badge-blue">${k.serp_features[0].replace(/_/g,' ')}</span>`:'—'}</td></tr>`;
+          }).join('')}
+        </tbody></table>
+      </div>
+    </div>`;
+  } catch (e) { error(el, e.message); }
+}
+
+// ── Bulk ──────────────────────────────────────────────────────────────────────
+async function fetchBulk() {
+  const raw = document.getElementById('bulk-domains').value.trim();
+  const domains = raw.split('\n').map(d => d.trim()).filter(Boolean);
+  if (!domains.length) return;
+  const metrics = ['m-auth','m-bl','m-spam','m-health'].filter(id => document.getElementById(id).checked).map(id => ({  'M-auth':'authority','m-bl':'backlinks','m-spam':'spam','m-health':'health' }[id]||id.replace('m-','').replace('auth','authority').replace('bl','backlinks').replace('spam','spam').replace('health','health')));
+  const el = document.getElementById('bulk-content');
+  loading(el);
+  try {
+    const d = await apiPost('/domain/bulk', { domains, metrics: ['authority','backlinks','spam','health'].filter((_,i) => [document.getElementById('m-auth').checked, document.getElementById('m-bl').checked, document.getElementById('m-spam').checked, document.getElementById('m-health').checked][i]) });
+    el.innerHTML = `<div class="fade-in card"><div class="card-title">Results — ${d.total} domains</div>
+      <table class="data-table"><thead><tr><th>Domain</th><th>DA Score</th><th>Grade</th><th>Backlinks</th><th>Spam</th><th>HTTPS</th></tr></thead><tbody>
+        ${d.results.map(r => `<tr>
+          <td style="font-weight:600">${r.domain}</td>
+          <td>${r.authority?`<span style="color:${gradeColor(r.authority.grade)};font-weight:700">${r.authority.authority_score}</span>`:'—'}</td>
+          <td>${r.authority?`<span class="metric-badge" style="background:rgba(79,127,255,.1);color:var(--accent)">${r.authority.grade}</span>`:'—'}</td>
+          <td>${r.backlinks?num(r.backlinks.total_backlinks):'—'}</td>
+          <td>${r.spam?`<span style="color:${r.spam.risk_level==='low'?'var(--green)':r.spam.risk_level==='medium'?'var(--amber)':'var(--red)'}">${r.spam.spam_score}</span>`:'—'}</td>
+          <td>${r.health?`<span style="color:${r.health.https?'var(--green)':'var(--red)'}">${r.health.https?'✓':'✗'}</span>`:'—'}</td>
+        </tr>`).join('')}
+      </tbody></table>
+    </div>`;
+  } catch (e) { error(el, e.message); }
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+  document.getElementById(`page-${id}`).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+</script>
+</body>
+</html>
